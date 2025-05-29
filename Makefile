@@ -1,25 +1,28 @@
-all: os-image
+OUTPUT = build/output
+OS_IMAGE = $(OUTPUT)/os-image.bin
 
-boot.bin: boot/boot.asm
-	nasm -f bin boot/boot.asm -o boot.bin
+all: $(OS_IMAGE)
 
-main.bin: loader/main.asm
-	nasm -f bin loader/main.asm -o main.bin
+$(OUTPUT):
+	mkdir -p $(OUTPUT)
 
-memory.bin: loader/memory.asm
-	nasm -f bin loader/memory.asm -o memory.bin
+$(OUTPUT)/boot.bin: $(OUTPUT)
+	nasm -f bin boot/boot.asm -o $(OUTPUT)/boot.bin
 
-kernel.bin: kernel/kernel.asm
-	nasm -f bin kernel/kernel.asm -o kernel.bin
+$(OUTPUT)/kernel.bin: $(OUTPUT)
+	nasm -f bin kernel/kernel.asm -o $(OUTPUT)/kernel.bin
 
-# kernel.bin: kernel/kernel.c
-# 	i686-elf-gcc -ffreestanding -c kernel/kernel.c -o kernel.bin
+$(OUTPUT)/main.bin: $(OUTPUT)
+	nasm -f bin loader/main.asm -o $(OUTPUT)/main.bin
 
-os-image: boot.bin main.bin memory.bin kernel.bin
-	cat boot.bin main.bin memory.bin kernel.bin > os-image.bin
+$(OUTPUT)/memory.bin: $(OUTPUT)
+	nasm -f bin loader/memory.asm -o $(OUTPUT)/memory.bin
 
-run:
-	qemu-system-i386 -fda os-image.bin
+$(OS_IMAGE): $(OUTPUT)/boot.bin $(OUTPUT)/kernel.bin $(OUTPUT)/main.bin $(OUTPUT)/memory.bin
+	cat $(OUTPUT)/boot.bin $(OUTPUT)/kernel.bin $(OUTPUT)/main.bin $(OUTPUT)/memory.bin > $(OS_IMAGE)
 
 clean:
-	rm -f *.bin
+	rm -rf $(OUTPUT)
+
+run:
+	qemu-system-i386 -fda $(OUTPUT)/os-image.bin
